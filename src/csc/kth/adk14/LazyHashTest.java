@@ -2,6 +2,8 @@ package csc.kth.adk14;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class LazyHashTest {
@@ -61,6 +63,33 @@ public class LazyHashTest {
 			assertEquals(0, LazyHash.hash("   "));
 			assertEquals(0, LazyHash.hash("  "));
 			assertEquals(0, LazyHash.hash(" "));
+		}
+	}
+	
+	public static class IndexArray {
+		int[] indexArray;
+		
+		private void printArray() {
+			for (int i = 0; i < indexArray.length; i++) {
+				System.out.println(i + ": " + indexArray[i]);
+			}
+		}
+		
+		@Before
+		public void setup() throws Exception {
+			String PATH = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/test_indexarray.txt";
+			indexArray = LazyHash.indexArrfromL(PATH);	
+		}
+		
+		@After
+		public void teardown() {
+			indexArray = null;
+		}
+		
+		@Test
+		public void testFirst() {
+			printArray();
+			assertEquals(0, indexArray[LazyHash.hash("ank")]);
 		}
 	}
 
