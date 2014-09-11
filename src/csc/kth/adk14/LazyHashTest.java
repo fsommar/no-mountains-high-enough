@@ -88,7 +88,7 @@ public class LazyHashTest {
 				String[] data = line.split(" "); 
 				
 				outputWriter.writeUTF(data[0]);
-				outputWriter.writeInt(Integer.valueOf(data[1].trim()));
+				outputWriter.writeLong(Integer.valueOf(data[1].trim()));
 			}
 			testCasesReader.close();
 			outputWriter.close();
@@ -106,7 +106,7 @@ public class LazyHashTest {
 			String output = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/abc.dat";
 			abc = new File(output);
 			generateTestCases(PATH, output);
-			indexArray = LazyHash.indexArrfromL(output);	
+			indexArray = LazyHash.indexArrfromL(output, PATH);	
 //			printArray();
 		}
 		

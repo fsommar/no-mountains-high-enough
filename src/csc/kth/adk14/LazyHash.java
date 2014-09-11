@@ -9,17 +9,31 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
-import sun.org.mozilla.javascript.ast.ForInLoop;
-
+/**
+ * We'll be working with three files:
+ * 	S - the source.
+ *  K - the concordance (word : byte offset in S)
+ *  L - the lazyhash lookup file (first three chars : byte offset in K)
+ *  
+ * @author fsommar, miloszw
+ *
+ */
 public class LazyHash {
 
-	public static void parse() throws IOException {
-		BufferedReader kReader = new BufferedReader(new FileReader(Constants.TEST_CASES_PATH));
+	/**
+	 * Parse the K file and generate the L file.
+	 * @throws IOException
+	 * @param input the K file
+	 * @param output the L file
+	 */
+	public static void parse(String input, String output) throws IOException {
+		BufferedReader kReader = new BufferedReader(
+				new InputStreamReader(new FileInputStream(input), "ISO-8859-1"));
 		DataOutputStream lWriter = new DataOutputStream(new BufferedOutputStream(
-				new FileOutputStream(Constants.L_PATH)));
+				new FileOutputStream(output)));
 		  
 		String lastSaved = "";
 		String line;
@@ -33,7 +47,7 @@ public class LazyHash {
 			if (!xxx.equals(lastSaved)) {
 				// save word together with corresponding byte offset in K
 				lWriter.writeUTF(xxx);
-				lWriter.writeInt(byteCounter);
+				lWriter.writeLong(byteCounter);
 				lastSaved = xxx;
 			}
 			byteCounter += line.getBytes().length;
@@ -41,17 +55,26 @@ public class LazyHash {
 		kReader.close();
 		lWriter.close();
 	}
-
-	public static long[] indexArrfromL(String path) throws IOException {
+	
+	/**
+	 * Create an array and populate it with data from L.
+	 * 
+	 * @param lPath path to L.
+	 * @return an array where each index corresponds to the unique
+	 * hash value generated from the first three chars, and the value
+	 * is the byte offset in S.
+	 * @throws IOException
+	 */
+	public static long[] indexArrfromL(String lPath, String kPath) throws IOException {
 		// One extra element for the EOF byte position
 		long[] indexArr = new long[900*29+30*29+29+1];
-		File f = new File(path);
-		DataInputStream lReader = new DataInputStream(new BufferedInputStream(new FileInputStream(f)));
+		DataInputStream lReader = new DataInputStream(new BufferedInputStream(new FileInputStream(lPath)));
+		File kFile = new File(kPath);
 		
 		try {
 			for (int i = 0; i < indexArr.length; i++) {
 				int currHash = hash(lReader.readUTF());
-				int pos = lReader.readInt();
+				long pos = lReader.readLong();
 				
 				indexArr[currHash] = pos;			
 
@@ -66,7 +89,7 @@ public class LazyHash {
 		}
 		
 		for (int i = indexArr.length-1; i >= 0 && indexArr[i] == 0; i--) {
-			indexArr[i] = f.length();
+			indexArr[i] = kFile.length();
 		}
 		
 		lReader.close();
@@ -74,6 +97,11 @@ public class LazyHash {
 		return indexArr;
 	}
 
+	/**
+	 * Generate a hash value based on the first three chars.
+	 * @param str the word.
+	 * @return hashed value of the first three chars of the word.
+	 */
 	public static int hash(String str) {
 		if (str == null) {
 			return 0;
@@ -89,8 +117,13 @@ public class LazyHash {
 
 		return hashCode;
 	}
-
-	public static int fromBase30(char c) {
+	
+	/**
+	 * Convert the character code from the Swedish alphabet to base 30.
+	 * @param c the char.
+	 * @return the base 30 repr of the char (duuuh).
+	 */
+	private static int fromBase30(char c) {
 		if ("abcdefghijgklmnopqrstuvwxyz".indexOf(c) != -1) {
 			return c - 96;
 		} else if (c == 'å') {
