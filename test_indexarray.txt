@@ -1,3 +1,4 @@
+a 1337
 anka 1
 bläckfisk 2
 citron 3
@@ -27,4 +28,3 @@ zebra 26
 åsna 27
 älg 28
 ödla 29
-
