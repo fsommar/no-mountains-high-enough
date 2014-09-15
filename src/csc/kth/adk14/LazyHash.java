@@ -15,61 +15,72 @@ import java.io.InputStreamReader;
 /**
  * We'll be working with three files:
  * 	S - the source.
- *  K - the concordance (word : byte offset in S)
- *  L - the lazyhash lookup file (first three chars : byte offset in K)
+ *  K - the generated concordance (word : byte offset in S).
+ *  K2 - distinct words with position of the first occurrence in E.
+ *  E - /Everest/ a list of byte offsets in S sorted by word.
+ *  L - the lazyhash lookup file (first three chars : byte offset in K2).
  *  
  * @author fsommar, miloszw
  *
  */
 public class LazyHash {
+	File lFile, k2File;
+
+	public LazyHash(String lPath, String k2Path) {
+		this.lFile = new File(lPath);
+		this.k2File = new File(k2Path);
+	}
 
 	/**
-	 * Parse the K file and generate the L file.
+	 * Parse the K2 file and generate the L file.
+	 * TODO: Save the word indices as shorts instead of UTF strings
 	 * @throws IOException
-	 * @param input the K file
-	 * @param output the L file
 	 */
-	public static void parse(String input, String output) throws IOException {
-		BufferedReader kReader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(input), "ISO-8859-1"));
+	public void generateFromFile() throws IOException {
+		DataInputStream k2Reader = new DataInputStream(new BufferedInputStream(new FileInputStream(k2File)));
 		DataOutputStream lWriter = new DataOutputStream(new BufferedOutputStream(
-				new FileOutputStream(output)));
+				new FileOutputStream(lFile)));
 		  
 		String lastSaved = "";
-		String line;
+		int posSize = Long.SIZE/8;
 		int byteCounter = 0;
 
-		while ((line = kReader.readLine()) != null) {
-			String[] data = line.split(" "); 
-			String currWord = data[0];
-			String xxx = currWord.substring(0, Math.min(3, currWord.length()));
-
-			if (!xxx.equals(lastSaved)) {
-				// save word together with corresponding byte offset in K
-				lWriter.writeUTF(xxx);
-				lWriter.writeLong(byteCounter);
-				lastSaved = xxx;
+		try {
+			while (true) {
+				String currWord = k2Reader.readUTF();
+				// Discard position in E
+				k2Reader.readLong();
+				String xxx = currWord.substring(0, Math.min(3, currWord.length()));
+				
+				if (!xxx.equals(lastSaved)) {
+					// save word together with corresponding byte offset in K2
+					lWriter.writeUTF(xxx);
+					lWriter.writeLong(byteCounter);
+					lastSaved = xxx;
+				}
+				// Inspect if encoding bug present with byte counts
+				byteCounter += currWord.getBytes().length + posSize;
 			}
-			byteCounter += line.getBytes().length;
+		} catch (EOFException e) {
+			
 		}
-		kReader.close();
+		k2Reader.close();
 		lWriter.close();
 	}
 	
 	/**
 	 * Create an array and populate it with data from L.
 	 * 
-	 * @param lPath path to L.
 	 * @return an array where each index corresponds to the unique
 	 * hash value generated from the first three chars, and the value
 	 * is the byte offset in S.
 	 * @throws IOException
 	 */
-	public static long[] indexArrfromL(String lPath, String kPath) throws IOException {
-		// One extra element for the EOF byte position
-		long[] indexArr = new long[900*29+30*29+29+1];
-		DataInputStream lReader = new DataInputStream(new BufferedInputStream(new FileInputStream(lPath)));
-		File kFile = new File(kPath);
+	public long[] readIndexArrFromFile() throws IOException {
+		// 3 positions in base 30, with maximum value of 900*29+30*29+29
+		// with one extra element for the EOF byte position
+		long[] indexArr = new long[900*29+30*29+29+1]; 
+		DataInputStream lReader = new DataInputStream(new BufferedInputStream(new FileInputStream(lFile)));
 		
 		try {
 			for (int i = 0; i < indexArr.length; i++) {
@@ -89,7 +100,7 @@ public class LazyHash {
 		}
 		
 		for (int i = indexArr.length-1; i >= 0 && indexArr[i] == 0; i--) {
-			indexArr[i] = kFile.length();
+			indexArr[i] = k2File.length();
 		}
 		
 		lReader.close();

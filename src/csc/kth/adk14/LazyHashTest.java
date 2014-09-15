@@ -10,7 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class LazyHashTest {
@@ -74,52 +74,25 @@ public class LazyHashTest {
 	}
 	
 	public static class IndexArray {
-		long[] indexArray;
-		File abc;
+		static long[] indexArray;
+		static File k2File;
 		
-		private void generateTestCases(String testCases, String output) throws Exception {
-			BufferedReader testCasesReader = new BufferedReader(new FileReader(new File(testCases)));
-			DataOutputStream outputWriter = new DataOutputStream(new BufferedOutputStream(
-					new FileOutputStream(output)));
-			  
-			String line;
-
-			while ((line = testCasesReader.readLine()) != null) {
-				String[] data = line.split(" "); 
-				
-				outputWriter.writeUTF(data[0]);
-				outputWriter.writeLong(Integer.valueOf(data[1].trim()));
-			}
-			testCasesReader.close();
-			outputWriter.close();
-		}
-		
-		private void printArray() {
-			for (int i = 0; i < 100; i++) {
-				System.out.println(i + ": " + indexArray[i]);
-			}
-		}
-		
-		@Before
-		public void setup() throws Exception {
-			String PATH = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/test_indexarray.txt";
-			String output = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/abc.dat";
-			abc = new File(output);
-			generateTestCases(PATH, output);
-			indexArray = LazyHash.indexArrfromL(output, PATH);	
-//			printArray();
-		}
-		
-		@After
-		public void teardown() {
-			indexArray = null;
-			abc = null;
+		@BeforeClass
+		public static void setup() throws Exception {
+			k2File = new File(Constants.TEST_PATH+"K2");
+			Concordance cn = new Concordance(Constants.TEST_PATH+"K", k2File.getPath() , Constants.TEST_PATH+"E");
+			cn.generateFromFile();
+			
+			LazyHash lh = new LazyHash(Constants.TEST_PATH+"L", Constants.TEST_PATH+"K2");
+			lh.generateFromFile();
+			
+			indexArray = lh.readIndexArrFromFile();	
 		}
 		
 		@Test
 		public void testFirst() {
-			assertEquals(1337, indexArray[0]);
-			assertEquals(1337, indexArray[LazyHash.hash("a")]);
+			assertEquals(0, indexArray[LazyHash.hash("aldrig")]);
+			assertEquals(0, indexArray[0]);
 		}
 		
 		@Test
@@ -129,7 +102,7 @@ public class LazyHashTest {
 		
 		@Test
 		public void testEndOfFile() {
-			assertEquals(abc.length(), indexArray[indexArray.length-1]);
+			assertEquals(k2File.length(), indexArray[indexArray.length-1]);
 		}
 	
 	}

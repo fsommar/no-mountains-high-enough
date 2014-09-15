@@ -7,10 +7,12 @@ public class Constants {
 	public static final String L_PATH = "/var/tmp/L";
 	// Korpus
 	public static final String S_PATH = "/info/adk14/labb1/korpus";
-	// Test cases
-	public static final String TEST_CASES_PATH = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/test_cases.txt";
-	// Test indexarray
-	public static final String TEST_INDEXARRAY = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/test_indexarray.txt";
-	// Test for the luls
-	public static final String TEST_ABC_123_456 = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/abc.dat";
+	
+	public static final String TEST_PATH = "tests/sd/";
+//	// Test cases
+//	public static final String TEST_CASES_PATH = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/test_cases.txt";
+//	// Test indexarray
+//	public static final String TEST_INDEXARRAY = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/test_indexarray.txt";
+//	// Test for the luls
+//	public static final String TEST_ABC_123_456 = "/afs/nada.kth.se/home/i/u1k3g18i/projects/adk14/abc.dat";
 }
