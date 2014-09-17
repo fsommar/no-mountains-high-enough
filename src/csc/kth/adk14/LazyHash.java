@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
  */
 public class LazyHash {
 	File lFile, k2File;
+	private long[] indexArray;
 
 	public LazyHash(String lPath, String k2Path) {
 		this.lFile = new File(lPath);
@@ -33,33 +34,39 @@ public class LazyHash {
 
 	/**
 	 * Parse the K2 file and generate the L file.
-	 * TODO: Save the word indices as shorts instead of UTF strings
 	 * @throws IOException
 	 */
 	public void generateFromFile() throws IOException {
-		DataInputStream k2Reader = new DataInputStream(new BufferedInputStream(new FileInputStream(k2File)));
+//		DataInputStream k2Reader = new DataInputStream(new BufferedInputStream(new FileInputStream(k2File)));
+		BufferedReader k2Reader = new BufferedReader(
+				new InputStreamReader(new FileInputStream(k2File)));
 		DataOutputStream lWriter = new DataOutputStream(new BufferedOutputStream(
 				new FileOutputStream(lFile)));
 		  
 		String lastSaved = "";
-		int posSize = Long.SIZE/8;
 		int byteCounter = 0;
 
 		try {
 			while (true) {
-				String currWord = k2Reader.readUTF();
-				// Discard position in E
-				k2Reader.readLong();
-				String xxx = currWord.substring(0, Math.min(3, currWord.length()));
+				String line = k2Reader.readLine();
+				if (line == null) {
+					break;
+				}				
 				
-				if (!xxx.equals(lastSaved)) {
-					// save word together with corresponding byte offset in K2
-					lWriter.writeUTF(xxx);
+				String[] lineData = line.split(" ");
+				
+				// We don't care about the position in E
+				String word = lineData[0];
+				String truncatedWord = word.substring(0, Math.min(3, word.length()));
+				
+				if (!truncatedWord.equals(lastSaved)) {
+					// save (hashed) word together with corresponding byte offset in K2
+					lWriter.writeShort(hash(truncatedWord));
 					lWriter.writeLong(byteCounter);
-					lastSaved = xxx;
+					lastSaved = truncatedWord;
 				}
 				// Inspect if encoding bug present with byte counts
-				byteCounter += currWord.getBytes().length + posSize;
+				byteCounter += line.getBytes().length;
 			}
 		} catch (EOFException e) {
 			
@@ -84,7 +91,7 @@ public class LazyHash {
 		
 		try {
 			for (int i = 0; i < indexArr.length; i++) {
-				int currHash = hash(lReader.readUTF());
+				int currHash = lReader.readShort();
 				long pos = lReader.readLong();
 				
 				indexArr[currHash] = pos;			
@@ -105,6 +112,7 @@ public class LazyHash {
 		
 		lReader.close();
 
+		this.indexArray = indexArr;
 		return indexArr;
 	}
 
@@ -145,5 +153,9 @@ public class LazyHash {
 			return 29;
 		}		
 		return 0;
+	}
+
+	public long[] getIndexArray() {
+		return indexArray;
 	}
 }

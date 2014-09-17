@@ -2,16 +2,13 @@ package csc.kth.adk14;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.IOException;
 
-import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import csc.kth.adk14.Concordance.PositionRange;
 
 public class LazyHashTest {
 	
@@ -80,7 +77,7 @@ public class LazyHashTest {
 		@BeforeClass
 		public static void setup() throws Exception {
 			k2File = new File(Constants.TEST_PATH+"K2");
-			Concordance cn = new Concordance(Constants.TEST_PATH+"K", k2File.getPath() , Constants.TEST_PATH+"E");
+			Mountains cn = new Mountains(Constants.TEST_PATH+"K", k2File.getPath() , Constants.TEST_PATH+"E");
 			cn.generateFromFile();
 			
 			LazyHash lh = new LazyHash(Constants.TEST_PATH+"L", Constants.TEST_PATH+"K2");
@@ -105,5 +102,47 @@ public class LazyHashTest {
 			assertEquals(k2File.length(), indexArray[indexArray.length-1]);
 		}
 	
+	}
+	
+	public static class Searching {
+		static long[] indexArray;
+		static File k2File;
+		static Concordance concordance;
+		static Mountains mountains;
+		
+		@BeforeClass
+		public static void setup() throws Exception {
+			k2File = new File(Constants.TEST_PATH+"K2");
+			mountains = new Mountains(Constants.TEST_PATH+"K", k2File.getPath() , Constants.TEST_PATH+"E");
+			mountains.generateFromFile();
+			
+			LazyHash lh = new LazyHash(Constants.TEST_PATH+"L", Constants.TEST_PATH+"K2");
+			lh.generateFromFile();
+			
+			concordance = new Concordance(mountains, lh);
+			
+			indexArray = lh.readIndexArrFromFile();	
+		}
+		
+		@Test
+		public void testMiddle() throws IOException {
+			PositionRange range = concordance.searchK2("demokrati");
+			assertEquals(296, range.start);
+			assertEquals(304, range.end);
+		}
+		
+		@Test
+		public void testFirst() throws IOException {
+			PositionRange range = concordance.searchK2("aldrig");
+			assertEquals(0, range.start);
+			assertEquals(8, range.end);
+		}
+		
+		@Test
+		public void testLast() throws IOException {
+			PositionRange range = concordance.searchK2("över");
+			assertEquals(3768, range.start);
+			assertEquals(mountains.getEverest().length(), range.end);
+		}
 	}
 }

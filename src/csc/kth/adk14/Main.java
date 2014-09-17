@@ -1,7 +1,5 @@
 package csc.kth.adk14;
 
-import java.io.File;
-import java.util.Scanner;
 
 
 
