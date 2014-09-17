@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
 /**
  * We'll be working with three files:
@@ -37,9 +38,8 @@ public class LazyHash {
 	 * @throws IOException
 	 */
 	public void generateFromFile() throws IOException {
-//		DataInputStream k2Reader = new DataInputStream(new BufferedInputStream(new FileInputStream(k2File)));
 		BufferedReader k2Reader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(k2File)));
+				new InputStreamReader(new FileInputStream(k2File),"ISO-8859-1"));
 		DataOutputStream lWriter = new DataOutputStream(new BufferedOutputStream(
 				new FileOutputStream(lFile)));
 		  
@@ -65,8 +65,8 @@ public class LazyHash {
 					lWriter.writeLong(byteCounter);
 					lastSaved = truncatedWord;
 				}
-				// Inspect if encoding bug present with byte counts
-				byteCounter += line.getBytes().length;
+				// Increase byteCounter with the line size plus one for new line char.
+				byteCounter += line.getBytes("ISO-8859-1").length + 1;
 			}
 		} catch (EOFException e) {
 			
@@ -86,7 +86,8 @@ public class LazyHash {
 	public long[] readIndexArrFromFile() throws IOException {
 		// 3 positions in base 30, with maximum value of 900*29+30*29+29
 		// with one extra element for the EOF byte position
-		long[] indexArr = new long[900*29+30*29+29+1]; 
+		long[] indexArr = new long[900*29+30*29+29+1];
+		Arrays.fill(indexArr, -1);
 		DataInputStream lReader = new DataInputStream(new BufferedInputStream(new FileInputStream(lFile)));
 		
 		try {
@@ -97,7 +98,7 @@ public class LazyHash {
 				indexArr[currHash] = pos;			
 
 				// check if values exist for previous keys
-				while (currHash > 0 && indexArr[currHash-1] == 0) {
+				while (currHash > 0 && indexArr[currHash-1] == -1) {
 					indexArr[currHash-1] = pos;
 					currHash--;
 				}
@@ -106,7 +107,7 @@ public class LazyHash {
 			// Fallthrough
 		}
 		
-		for (int i = indexArr.length-1; i >= 0 && indexArr[i] == 0; i--) {
+		for (int i = indexArr.length-1; i >= 0 && indexArr[i] == -1; i--) {
 			indexArr[i] = k2File.length();
 		}
 		

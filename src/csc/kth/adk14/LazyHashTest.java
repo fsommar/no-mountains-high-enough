@@ -93,8 +93,18 @@ public class LazyHashTest {
 		}
 		
 		@Test
+		public void testSecond() {
+			assertEquals(9, indexArray[LazyHash.hash("alla")]);
+		}
+		
+		@Test
+		public void testDemocracy() {
+			assertEquals(132, indexArray[LazyHash.hash("demokrati")]);
+		}
+		
+		@Test
 		public void testLastActual() {
-			assertEquals(29, indexArray[LazyHash.hash("ödla")]);			
+			assertEquals(2806, indexArray[LazyHash.hash("över")]);			
 		}
 		
 		@Test

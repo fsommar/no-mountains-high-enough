@@ -2,6 +2,7 @@ package csc.kth.adk14;
 
 import java.io.DataInput;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 
 
@@ -55,19 +56,20 @@ public class Concordance {
 		
 		// COMMENCE LINEAR SEARCH
 		k2Reader.seek(startRange);
-		k2Reader.readLine(); // !! make sure we dont miss the first word
+		if (startRange != indexArray[hash]) {
+			System.out.println("Commencing linear search and skipping one line: "+k2Reader.readLine());
+		}
 		
 		try {
 			while (true) {
 				LineData data = readLineDataFromFile(k2Reader);
-				
 				int wordComp = data.word.compareTo(searchTerm);
 				if (wordComp == 0) {
 					long nextPos = readLineDataFromFile(k2Reader).position;
 					// Returns the position of the position tuple in Everest.
 					return new PositionRange(data.position, nextPos);
 				} else if (wordComp > 0) {
-					System.out.println("ops! "+data.word);
+					System.out.println("went too far in searchK2: "+data.word);
 					break;
 				}
 			}

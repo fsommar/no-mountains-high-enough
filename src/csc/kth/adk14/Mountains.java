@@ -31,15 +31,13 @@ public class Mountains {
 	 * K2 contains a list of distinct words and their offset in Everest,
 	 * and Everest contains a list of the offsets in S sorted by each word.
 	 * 
-	 * TODO: write string as bytes instead of UTF8.
-	 * TODO: Add EOF file mark at the end
 	 * @throws Exception sometiemess. dont ask
 	 */
 	public void generateFromFile() throws Exception {
 		BufferedReader kReader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(kFile), "ISO-8859-1"));
 		BufferedWriter k2Writer = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(k2File)));
+				new OutputStreamWriter(new FileOutputStream(k2File), "ISO-8859-1"));
 		DataOutputStream eWriter = new DataOutputStream(new BufferedOutputStream(
 				new FileOutputStream(eFile)));
 		  
@@ -66,9 +64,10 @@ public class Mountains {
 			}
 			offsetInE += positionSize;
 		}
+		eWriter.close();
+		k2Writer.write("EOF "+eFile.length()+"\n");
 		kReader.close();
 		k2Writer.close();
-		eWriter.close();
 	}
 
 	public File getK2() {
