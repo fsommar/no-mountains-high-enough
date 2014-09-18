@@ -127,8 +127,8 @@ public class LazyHash {
 			return 0;
 		}
 
-		String xxx = str.toLowerCase().substring(0, Math.min(3, str.length()));
-		char[] chars = xxx.toCharArray();
+		String truncatedWord = str.toLowerCase().substring(0, Math.min(3, str.length()));
+		char[] chars = truncatedWord.toCharArray();
 		int hashCode = 0;
 		
 		for (int i = 0; i < chars.length; i++) {

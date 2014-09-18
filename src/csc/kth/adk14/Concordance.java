@@ -2,17 +2,21 @@ package csc.kth.adk14;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 
 
 public class Concordance {
-	private Mountains concordance;
+	private Mountains mountains;
 	private LazyHash lazyHash;
+	private String sPath;
 	
-	public Concordance(Mountains concordance, LazyHash lazyHash) {
-		this.concordance = concordance;
+	public Concordance(Mountains mountains, LazyHash lazyHash, String sPath) throws IOException {
+		this.mountains = mountains;
 		this.lazyHash = lazyHash;
+		this.sPath = sPath;
+		
+		lazyHash.readIndexArrFromFile();
 	}
 
 	/**
@@ -23,6 +27,7 @@ public class Concordance {
 			throws IOException {
 		// Find byte offset of the word in K through L
 		int hash = LazyHash.hash(searchTerm);
+		searchTerm = searchTerm.toLowerCase();
 		
 		long[] indexArray = lazyHash.getIndexArray();
 		
@@ -30,7 +35,7 @@ public class Concordance {
 		long endRange = indexArray[hash+1];
 		
 		// Init a reader
-		RandomAccessFile k2Reader = new RandomAccessFile(concordance.getK2(), "r");
+		RandomAccessFile k2Reader = new RandomAccessFile(mountains.getK2(), "r");
 		
 		// Binary search the K file to find the byte offset of the word in S.		
 		while (endRange-startRange > Constants.LINEAR_SEARCH_TRESHOLD) {
@@ -57,7 +62,7 @@ public class Concordance {
 		// COMMENCE LINEAR SEARCH
 		k2Reader.seek(startRange);
 		if (startRange != indexArray[hash]) {
-			System.out.println("Commencing linear search and skipping one line: "+k2Reader.readLine());
+			k2Reader.readLine();
 		}
 		
 		try {
@@ -69,7 +74,7 @@ public class Concordance {
 					// Returns the position of the position tuple in Everest.
 					return new PositionRange(data.position, nextPos);
 				} else if (wordComp > 0) {
-					System.out.println("went too far in searchK2: "+data.word);
+					System.err.println("went too far in searchK2: "+data.word);
 					break;
 				}
 			}
@@ -77,6 +82,63 @@ public class Concordance {
 		} finally {
 			k2Reader.close();
 		}
+	}
+	
+	/**
+	 * The range is assumed to be given at valid positions in the file.
+	 * @param range The range at which to get the byte offsets from.
+	 * @return A list of all the byte offsets in S given by the provided {@link PositionRange}.
+	 */
+	public ArrayList<Long> climbEverest(PositionRange range) throws IOException {
+		RandomAccessFile eReader = new RandomAccessFile(mountains.getEverest(), "r");
+		eReader.seek(range.start);
+		ArrayList<Long> results = new ArrayList<Long>();
+		
+		while (eReader.getFilePointer() < range.end) {
+			results.add(eReader.readLong());
+		}
+		return results;
+	}
+	
+	/**
+	 * Gets the the search term from the source file including the surrounding context.
+	 * 
+	 * @param offsetsInE
+	 * @param wordLength the length of the search term in bytes.
+	 * @return
+	 * @throws IOException
+	 */
+	public String[] getContextArrayFromFile(ArrayList<Long> offsetsInE, int wordLength) throws IOException {
+		RandomAccessFile sFile = new RandomAccessFile(sPath, "r");
+		String[] contextArray = new String[offsetsInE.size()];
+		int index = 0;
+		for(long offset : offsetsInE) {
+			int beginOffset = (int) Math.max(0, offset - Constants.CONTEXT_SIZE);
+			int endOffset = (int) Math.min(sFile.length(), offset + wordLength + Constants.CONTEXT_SIZE);
+
+			sFile.seek(beginOffset);
+			
+			byte[] byteBuffer = new byte[endOffset - beginOffset]; 
+			sFile.readFully(byteBuffer);
+			
+			contextArray[index] = new String(byteBuffer, "ISO-8859-1").replaceAll("\n", " "); 
+			index++;
+		}
+		
+		return contextArray;
+	}
+	
+	public String[] search(String word) {
+		try {
+			PositionRange pr = searchK2(word);
+			ArrayList<Long> al = climbEverest(pr);
+			String[] actual = getContextArrayFromFile(al, word.length());
+			return actual;
+		} catch (IOException e) {
+			System.err.println("concordance.search: "+e);
+			return null;
+		}
+
 	}
 	
 	public static LineData readLineDataFromFile(DataInput fileInput) throws IOException {

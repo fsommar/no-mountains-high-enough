@@ -7,8 +7,13 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+
+import csc.kth.adk14.Concordance.PositionRange;
 
 
 public class Mountains {
@@ -33,7 +38,7 @@ public class Mountains {
 	 * 
 	 * @throws Exception sometiemess. dont ask
 	 */
-	public void generateFromFile() throws Exception {
+	public void generateFromFile() throws IOException {
 		BufferedReader kReader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(kFile), "ISO-8859-1"));
 		BufferedWriter k2Writer = new BufferedWriter(
@@ -54,7 +59,7 @@ public class Mountains {
 			if (!currWord.equals(lastSaved)) {
 				// Save word in K2 together with corresponding byte offset in E.
 				k2Writer.write(currWord+" "+offsetInE+"\n");
-				// Save position in S.
+				// Save the word's position in S in E.
 				eWriter.writeLong(posInS);
 				lastSaved = currWord;
 			} else {
@@ -65,11 +70,12 @@ public class Mountains {
 			offsetInE += positionSize;
 		}
 		eWriter.close();
+		// Make sure this is written after the writer to 
 		k2Writer.write("EOF "+eFile.length()+"\n");
 		kReader.close();
 		k2Writer.close();
 	}
-
+	
 	public File getK2() {
 		return k2File;
 	}

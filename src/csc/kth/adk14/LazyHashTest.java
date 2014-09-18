@@ -113,46 +113,4 @@ public class LazyHashTest {
 		}
 	
 	}
-	
-	public static class Searching {
-		static long[] indexArray;
-		static File k2File;
-		static Concordance concordance;
-		static Mountains mountains;
-		
-		@BeforeClass
-		public static void setup() throws Exception {
-			k2File = new File(Constants.TEST_PATH+"K2");
-			mountains = new Mountains(Constants.TEST_PATH+"K", k2File.getPath() , Constants.TEST_PATH+"E");
-			mountains.generateFromFile();
-			
-			LazyHash lh = new LazyHash(Constants.TEST_PATH+"L", Constants.TEST_PATH+"K2");
-			lh.generateFromFile();
-			
-			concordance = new Concordance(mountains, lh);
-			
-			indexArray = lh.readIndexArrFromFile();	
-		}
-		
-		@Test
-		public void testMiddle() throws IOException {
-			PositionRange range = concordance.searchK2("demokrati");
-			assertEquals(296, range.start);
-			assertEquals(304, range.end);
-		}
-		
-		@Test
-		public void testFirst() throws IOException {
-			PositionRange range = concordance.searchK2("aldrig");
-			assertEquals(0, range.start);
-			assertEquals(8, range.end);
-		}
-		
-		@Test
-		public void testLast() throws IOException {
-			PositionRange range = concordance.searchK2("över");
-			assertEquals(3768, range.start);
-			assertEquals(mountains.getEverest().length(), range.end);
-		}
-	}
 }
