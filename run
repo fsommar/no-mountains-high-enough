@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -cp src csc.kth.adk14.Main $1

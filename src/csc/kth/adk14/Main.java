@@ -1,13 +1,16 @@
 package csc.kth.adk14;
 
+import java.io.IOException;
 import java.util.Scanner;
+
+import csc.kth.adk14.Concordance.PositionRange;
 
 
 
 
 public class Main {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		// ask for word to search for
 		String searchTerm = "";
 		Mountains testMountains = new Mountains(
@@ -24,35 +27,53 @@ public class Main {
 		
 
 		if (args.length < 1) {
-			System.out.print("Enter word to search for: ");
-			// TODO: Check for null
-			searchTerm = new Scanner(System.in).nextLine().trim();
+			while (searchTerm.equals("") || searchTerm == null) {
+				System.out.print("Mata in ett ord: ");
+				searchTerm = new Scanner(System.in).nextLine();
+			}
+			searchTerm = searchTerm.trim();
 		} else if (args[0].equals("-g")){
-			// generate files
-			mountains.generateFromFile();
-			// mountains needs to generate its files first
-			lazyHash.generateFromFile();
+			try {
+				// generate files
+				mountains.generateFromFile();
+				// mountains needs to generate its files first
+				lazyHash.generateFromFile();				
+			} catch (IOException e) {
+				System.out.println("Misslyckades med att generera filer!\n"+e);
+			}
 			return;
 		} else {
 			searchTerm = args[0];
 		}
 		
-		Concordance c = new Concordance(mountains, lazyHash, Constants.S_PATH);
 		
-		String[] results = c.search(searchTerm);
-		System.out.printf("Det finns %d förekomster av ordet '%s'.\n", results.length, searchTerm);
-		if (results.length > Constants.MAX_OCCURENCES) {
-			System.out.printf("Det finns fler än %d förekomster av ordet '%s'. Vill du visa alla förekomster?\n"+
-					"Tryck på enter för att visa eller Ctrl-C för att avbryta.",
-					Constants.MAX_OCCURENCES, searchTerm);
-			// Listen for input
-			new Scanner(System.in).nextLine();
+		Concordance c = null;
+		try {
+			c = new Concordance(mountains, lazyHash, Constants.S_PATH);			
+		} catch (IOException e) {
+			System.out.println("Misslyckades med att öppna konkordansen!\n"+e);
 		}
 		
-		for (String s : results) {
-			System.out.println(s);
+		try {
+			PositionRange posRange = c.searchK2(searchTerm);
+			int occurrencesCount = posRange.getOccurrenceCount();
+			System.out.printf("Det finns %d förekomster av ordet '%s'.\n", occurrencesCount, searchTerm);
+			if (occurrencesCount > Constants.MAX_OCCURENCES) {
+				System.out.printf("Det finns fler än %d förekomster av ordet '%s'. Vill du visa alla förekomster?\n"+
+						"Tryck på enter för att visa eller Ctrl-C för att avbryta.",
+						Constants.MAX_OCCURENCES, searchTerm);
+				// Listen for input
+				new Scanner(System.in).nextLine();
+			}
+			String[] results = c.search(posRange);
+			for (String s : results) {
+				System.out.println(s);
+			}
+		} catch (WordNotFoundException e) {
+			System.out.println("Ordet du söker finns inte! :(");
+		} catch (IOException e) {
+			System.out.println("Filen finns inte!"+e);
 		}
-		
 	}
 	
 

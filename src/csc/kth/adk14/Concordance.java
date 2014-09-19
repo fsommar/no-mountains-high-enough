@@ -1,6 +1,7 @@
 package csc.kth.adk14;
 
 import java.io.DataInput;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -21,10 +22,11 @@ public class Concordance {
 
 	/**
 	 * Use binary search to find a word and its corresponding range of positions in a {@link PositionRange} in the K2 file.
-	 * @return the position of the word in the S file, or -1 if the word wasn't found.
+	 * @return the position of the word in the S file.
+	 * @throws WordNotFoundException if the word is not found in the source file.
 	 */
 	public PositionRange searchK2(String searchTerm)
-			throws IOException {
+			throws IOException, WordNotFoundException {
 		// Find byte offset of the word in K through L
 		int hash = LazyHash.hash(searchTerm);
 		searchTerm = searchTerm.toLowerCase();
@@ -72,13 +74,13 @@ public class Concordance {
 				if (wordComp == 0) {
 					long nextPos = readLineDataFromFile(k2Reader).position;
 					// Returns the position of the position tuple in Everest.
-					return new PositionRange(data.position, nextPos);
+					return new PositionRange(data.word, data.position, nextPos);
 				} else if (wordComp > 0) {
 					System.err.println("went too far in searchK2: "+data.word);
 					break;
 				}
 			}
-			return null;
+			throw new WordNotFoundException();
 		} finally {
 			k2Reader.close();
 		}
@@ -128,17 +130,10 @@ public class Concordance {
 		return contextArray;
 	}
 	
-	public String[] search(String word) {
-		try {
-			PositionRange pr = searchK2(word);
-			ArrayList<Long> al = climbEverest(pr);
-			String[] actual = getContextArrayFromFile(al, word.length());
-			return actual;
-		} catch (IOException e) {
-			System.err.println("concordance.search: "+e);
-			return null;
-		}
-
+	public String[] search(PositionRange posRange) throws IOException {
+		ArrayList<Long> al = climbEverest(posRange);
+		String[] actual = getContextArrayFromFile(al, posRange.word.length());
+		return actual;
 	}
 	
 	public static LineData readLineDataFromFile(DataInput fileInput) throws IOException {
@@ -164,11 +159,24 @@ public class Concordance {
 	}
 
 	
+	/**
+	 * Contains information about the position range in E for given word. 
+	 *
+	 */
 	public static class PositionRange {
 		public final long start, end;
-		public PositionRange(long start, long end) {
+		public final String word;
+		public PositionRange(String word, long start, long end) {
+			this.word = word;
 			this.start = start;
 			this.end = end;
+		}
+		
+		public int getOccurrenceCount() {
+			if (end <= start) {
+				return 0;
+			}
+			return (int) (end - start) / Long.SIZE * 8;
 		}
 	}
 	
