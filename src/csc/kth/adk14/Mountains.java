@@ -10,10 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-
-import csc.kth.adk14.Concordance.PositionRange;
 
 
 public class Mountains {
@@ -39,38 +35,42 @@ public class Mountains {
 	 * @throws Exception sometiemess. dont ask
 	 */
 	public void generateFromFile() throws IOException {
+		// Buffered streams are used because we're reading/writing the entire contents of the files.
 		BufferedReader kReader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(kFile), "ISO-8859-1"));
 		BufferedWriter k2Writer = new BufferedWriter(
 				new OutputStreamWriter(new FileOutputStream(k2File), "ISO-8859-1"));
+		// DataOutputStream is used to create a binary file.
 		DataOutputStream eWriter = new DataOutputStream(new BufferedOutputStream(
 				new FileOutputStream(eFile)));
 		  
 		String lastSaved = "";
 		String line;
+		// Keep track of the current offset in E in bytes.
 		long offsetInE = 0;
+		// Keep track of the byte size of the stored positions
 		int positionSize = Long.SIZE/8;
 
 		while ((line = kReader.readLine()) != null) {
+			// Each line in K is of the form >> a word : byte offset in S (separated by a space).
 			String[] data = line.split(" "); 
 			String currWord = data[0];
 			long posInS = Long.valueOf(data[1]);
 			
+			// Make sure not to repeatedly add the same word, i.e. only distinct words will be added to K2.
 			if (!currWord.equals(lastSaved)) {
 				// Save word in K2 together with corresponding byte offset in E.
 				k2Writer.write(currWord+" "+offsetInE+"\n");
-				// Save the word's position in S in E.
-				eWriter.writeLong(posInS);
 				lastSaved = currWord;
-			} else {
-				// The word has previously been added to K2 so only add it to E.
-				// Save position in S.
-				eWriter.writeLong(posInS);
 			}
+			
+			// Save the word's position in S in E.
+			eWriter.writeLong(posInS);
+			// One long was added to E, increment the offset accordingly.
 			offsetInE += positionSize;
 		}
 		eWriter.close();
-		// Make sure this is written after the writer to 
+		// Make sure this is written after the stream to E is closed and flushed for the changes to show.
 		k2Writer.write("EOF "+eFile.length()+"\n");
 		kReader.close();
 		k2Writer.close();

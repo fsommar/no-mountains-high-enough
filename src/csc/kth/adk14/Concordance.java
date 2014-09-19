@@ -1,7 +1,6 @@
 package csc.kth.adk14;
 
 import java.io.DataInput;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ public class Concordance {
 		this.lazyHash = lazyHash;
 		this.sPath = sPath;
 		
+		// Make sure to read the index array into memory from file to be able to use it in searches.
 		lazyHash.readIndexArrFromFile();
 	}
 
@@ -27,28 +27,35 @@ public class Concordance {
 	 */
 	public PositionRange searchK2(String searchTerm)
 			throws IOException, WordNotFoundException {
-		// Find byte offset of the word in K through L
-		int hash = LazyHash.hash(searchTerm);
+		
 		searchTerm = searchTerm.toLowerCase();
+		int hash = LazyHash.hash(searchTerm);
 		
 		long[] indexArray = lazyHash.getIndexArray();
 		
+		// The range is between the first three characters of the word until the next three-letter combination.
 		long startRange = indexArray[hash];
 		long endRange = indexArray[hash+1];
 		
-		// Init a reader
+		// Initialize a stream for random access for seeking around in the file
+		// without having to keep it in memory.
 		RandomAccessFile k2Reader = new RandomAccessFile(mountains.getK2(), "r");
 		
-		// Binary search the K file to find the byte offset of the word in S.		
-		while (endRange-startRange > Constants.LINEAR_SEARCH_TRESHOLD) {
+		// Binary search the K2 file to find the byte offset of the word in S.
+		// Start linear searching after the threshold is reached and binary search
+		// no longer is as effective.
+		while (endRange-startRange > Constants.LINEAR_SEARCH_THRESHOLD) {
 			long middle = (startRange + endRange) / 2;
 			k2Reader.seek(middle);
 			
-			// skip to next line (in case we end up in the middle of a line)			
+			// skip to next line (in case we end up in the middle of a line)		
 			k2Reader.readLine();
 			
+			// Read the current line
 			LineData data = readLineDataFromFile(k2Reader);
 			if (data == null) {
+				// This will be null if the line isn't found,
+				// most likely because of EOF.
 				break;
 			}
 
@@ -63,6 +70,8 @@ public class Concordance {
 		
 		// COMMENCE LINEAR SEARCH
 		k2Reader.seek(startRange);
+		// If startRange hasn't range it means that we haven't jumped in the file
+		// and therefore are in the beginning of a line.
 		if (startRange != indexArray[hash]) {
 			k2Reader.readLine();
 		}
@@ -71,16 +80,18 @@ public class Concordance {
 			while (true) {
 				LineData data = readLineDataFromFile(k2Reader);
 				int wordComp = data.word.compareTo(searchTerm);
-				if (wordComp == 0) {
+				if (wordComp == 0) { // the words are equal
+					// Read the next position to get a range for which to look in the E file.
 					long nextPos = readLineDataFromFile(k2Reader).position;
 					// Returns the position of the position tuple in Everest.
 					return new PositionRange(data.word, data.position, nextPos);
-				} else if (wordComp > 0) {
-					System.err.println("went too far in searchK2: "+data.word);
-					break;
+				} else if (wordComp > 0) { 
+					// data.word is greater than the searched term. This means
+					// we have gone too far in the file meaning the word does
+					// not exist.
+					throw new WordNotFoundException();
 				}
 			}
-			throw new WordNotFoundException();
 		} finally {
 			k2Reader.close();
 		}
@@ -93,12 +104,15 @@ public class Concordance {
 	 */
 	public ArrayList<Long> climbEverest(PositionRange range) throws IOException {
 		RandomAccessFile eReader = new RandomAccessFile(mountains.getEverest(), "r");
+		// Seek to the start of the range which is exactly where that range starts.
 		eReader.seek(range.start);
 		ArrayList<Long> results = new ArrayList<Long>();
 		
+		// Read while still not at the end of the range.
 		while (eReader.getFilePointer() < range.end) {
 			results.add(eReader.readLong());
 		}
+		eReader.close();
 		return results;
 	}
 	
@@ -107,35 +121,56 @@ public class Concordance {
 	 * 
 	 * @param offsetsInE
 	 * @param wordLength the length of the search term in bytes.
-	 * @return
-	 * @throws IOException
+	 * @return An array of the surrounding context of the word, one String per each word location.
+	 * @throws IOException Probably in case the S-file doesn't exist, but don't quote me on that one.
 	 */
 	public String[] getContextArrayFromFile(ArrayList<Long> offsetsInE, int wordLength) throws IOException {
-		RandomAccessFile sFile = new RandomAccessFile(sPath, "r");
+		RandomAccessFile sReader = new RandomAccessFile(sPath, "r");
+		// The number of Strings correspond to the number of positions for the word in S.
 		String[] contextArray = new String[offsetsInE.size()];
+		
 		int index = 0;
 		for(long offset : offsetsInE) {
+			// Make sure the beginning offset is not negative.
 			int beginOffset = (int) Math.max(0, offset - Constants.CONTEXT_SIZE);
-			int endOffset = (int) Math.min(sFile.length(), offset + wordLength + Constants.CONTEXT_SIZE);
+			// Make sure the ending offset is not further than the end of file.
+			int endOffset = (int) Math.min(sReader.length(), offset + wordLength + Constants.CONTEXT_SIZE);
 
-			sFile.seek(beginOffset);
+			// Start reading at the beginning offset.
+			sReader.seek(beginOffset);
 			
+			// Read everything between the beginning and ending offset.
 			byte[] byteBuffer = new byte[endOffset - beginOffset]; 
-			sFile.readFully(byteBuffer);
+			sReader.readFully(byteBuffer);
 			
+			// The file is in ISO-8859-1.
+			// Replace new lines with spaces as specified by the lab memo.
 			contextArray[index] = new String(byteBuffer, "ISO-8859-1").replaceAll("\n", " "); 
 			index++;
 		}
-		
+		sReader.close();
 		return contextArray;
 	}
 	
+	/**
+	 * 
+	 * @param posRange The position range of the sought word in E.
+	 * @return The contexts (surrounding characters in S) for the word .
+	 * @throws IOException
+	 */
 	public String[] search(PositionRange posRange) throws IOException {
-		ArrayList<Long> al = climbEverest(posRange);
-		String[] actual = getContextArrayFromFile(al, posRange.word.length());
-		return actual;
+		ArrayList<Long> positionsInE = climbEverest(posRange);
+		String[] wordContexts = getContextArrayFromFile(positionsInE, posRange.word.length());
+		return wordContexts;
 	}
 	
+	/**
+	 * Reads a line from file and returns the {@link LineData} object corresponding to that line.
+	 * 
+	 * @param fileInput The file stream to be used to read from.
+	 * @return The {@link LineData} object corresponding to that line.
+	 * @throws IOException
+	 */
 	public static LineData readLineDataFromFile(DataInput fileInput) throws IOException {
 		String line = fileInput.readLine();
 		if (line == null) {
@@ -148,6 +183,9 @@ public class Concordance {
 		return new LineData(word, Long.valueOf(lineData[1]));
 	}
 	
+	/**
+	 * Represents the data for a line, including the word and its corresponding position as a long.
+	 */
 	public static class LineData {
 		public final String word;
 		public final long position;
@@ -172,6 +210,9 @@ public class Concordance {
 			this.end = end;
 		}
 		
+		/**
+		 * @return The number of occurrences of the word in S.
+		 */
 		public int getOccurrenceCount() {
 			if (end <= start) {
 				return 0;

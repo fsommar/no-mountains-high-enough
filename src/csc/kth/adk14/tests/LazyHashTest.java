@@ -1,14 +1,15 @@
-package csc.kth.adk14;
+package csc.kth.adk14.tests;
 
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import csc.kth.adk14.Concordance.PositionRange;
+import csc.kth.adk14.Constants;
+import csc.kth.adk14.LazyHash;
+import csc.kth.adk14.Mountains;
 
 public class LazyHashTest {
 	
@@ -104,7 +105,7 @@ public class LazyHashTest {
 		
 		@Test
 		public void testLastActual() {
-			assertEquals(2806, indexArray[LazyHash.hash("över")]);			
+			assertEquals(2836, indexArray[LazyHash.hash("över")]);			
 		}
 		
 		@Test
