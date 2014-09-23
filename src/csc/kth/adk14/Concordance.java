@@ -217,7 +217,7 @@ public class Concordance {
 			if (end <= start) {
 				return 0;
 			}
-			return (int) (end - start) / Long.SIZE * 8;
+			return (int) (end - start) / (Long.SIZE / 8);
 		}
 	}
 	
