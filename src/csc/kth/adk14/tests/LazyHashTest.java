@@ -105,7 +105,7 @@ public class LazyHashTest {
 		
 		@Test
 		public void testLastActual() {
-			assertEquals(2836, indexArray[LazyHash.hash("över")]);			
+			assertEquals(2836, indexArray[LazyHash.hash("över")]);	
 		}
 		
 		@Test

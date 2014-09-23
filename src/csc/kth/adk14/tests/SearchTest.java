@@ -36,7 +36,7 @@ public class SearchTest {
 	}
 	
 	@Test
-	public void testFirst() throws IOException, WordNotFoundException {
+	public void testFirstInSource() throws IOException, WordNotFoundException {
 		String word = "hej";
 		String[] actual = concordance.search(concordance.searchK2(word));
 		
@@ -45,7 +45,7 @@ public class SearchTest {
 	}
 	
 	@Test
-	public void testMiddle() throws IOException, WordNotFoundException {
+	public void testMiddleInSource() throws IOException, WordNotFoundException {
 		String word = "men";
 		String[] actual = concordance.search(concordance.searchK2(word));
 		
@@ -54,7 +54,7 @@ public class SearchTest {
 	}
 	
 	@Test
-	public void testLast() throws IOException, WordNotFoundException {
+	public void testLastInSource() throws IOException, WordNotFoundException {
 		String word = "låtsas";
 		String[] actual = concordance.search(concordance.searchK2(word));
 		
@@ -73,7 +73,7 @@ public class SearchTest {
 	}
 	
 	@Test
-	public void testMultiple() throws IOException, WordNotFoundException {
+	public void testMultipleResults() throws IOException, WordNotFoundException {
 		String word = "älskar";
 		String[] actual = concordance.search(concordance.searchK2(word));
 		

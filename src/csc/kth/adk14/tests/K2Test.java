@@ -37,23 +37,24 @@ public class K2Test {
 	}
 	
 	@Test
-	public void testMiddle() throws IOException, WordNotFoundException {
-		PositionRange range = concordance.searchK2("demokrati");
-		assertEquals(296, range.start);
-		assertEquals(304, range.end);
-	}
-	
-	@Test
-	public void testFirst() throws IOException, WordNotFoundException {
+	public void testFirstInK2() throws IOException, WordNotFoundException {
 		PositionRange range = concordance.searchK2("aldrig");
 		assertEquals(0, range.start);
 		assertEquals(8, range.end);
 	}
 	
 	@Test
-	public void testLast() throws IOException, WordNotFoundException {
+	public void testMiddleInK2() throws IOException, WordNotFoundException {
+		PositionRange range = concordance.searchK2("demokrati");
+		assertEquals(296, range.start);
+		assertEquals(304, range.end);
+	}
+	
+	@Test
+	public void testLastInK2() throws IOException, WordNotFoundException {
 		PositionRange range = concordance.searchK2("över");
 		assertEquals(3800, range.start);
+		// End range is at end of file
 		assertEquals(mountains.getEverest().length(), range.end);
 	}
 }

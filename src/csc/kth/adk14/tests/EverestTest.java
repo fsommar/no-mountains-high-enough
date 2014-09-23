@@ -38,7 +38,7 @@ public class EverestTest {
 	}
 
 	@Test
-	public void testFirst() throws IOException {
+	public void testFirstInEverest() throws IOException {
 		PositionRange range = new PositionRange("aldrig", 0, 8);
 		ArrayList<Long> expected = new ArrayList<Long>(
 				Arrays.asList(311L));
@@ -47,7 +47,7 @@ public class EverestTest {
 	}
 	
 	@Test
-	public void testMiddle() throws IOException {
+	public void testMiddleInEverest() throws IOException {
 		PositionRange range = new PositionRange("de", 248, 280);
 		ArrayList<Long> expected = new ArrayList<Long>(
 				Arrays.asList(
@@ -62,7 +62,7 @@ public class EverestTest {
 
 	
 	@Test
-	public void testLast() throws IOException {
+	public void testLastInEverest() throws IOException {
 		PositionRange range = new PositionRange("över", 3800, 3864);
 		ArrayList<Long> expected = new ArrayList<Long>(
 				Arrays.asList(
