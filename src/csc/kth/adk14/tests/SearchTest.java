@@ -63,6 +63,28 @@ public class SearchTest {
 		assertArrayEquals(expected, actual);
 	}
 	
+	@Test(expected=WordNotFoundException.class)
+	public void testLastHash() throws IOException, WordNotFoundException {
+		String word = "öööh";
+		
+		String[] invalid = concordance.search(concordance.searchK2(word));
+	}
+	
+	@Test(expected=WordNotFoundException.class)
+	public void testFirstHash() throws IOException, WordNotFoundException {
+		String word = "   ";
+		
+		String[] invalid = concordance.search(concordance.searchK2(word));
+	}
+	
+	
+	@Test(expected=WordNotFoundException.class)
+	public void testAAAHash() throws IOException, WordNotFoundException {
+		String word = "aaa";
+		
+		String[] invalid = concordance.search(concordance.searchK2(word));
+	}
+	
 	@Test
 	public void testDifferentCase() throws IOException, WordNotFoundException {
 		String word = "YTTRANDEFRIHET";

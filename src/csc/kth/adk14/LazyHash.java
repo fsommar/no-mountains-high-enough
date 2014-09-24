@@ -79,9 +79,9 @@ public class LazyHash {
 	 * @throws IOException
 	 */
 	public long[] readIndexArrFromFile() throws IOException {
-		// 3 positions in base 30, with maximum value of 900*29+30*29+29
+		// 3 positions in base 30, with maximum value of 900*29+30*29+29, meaning 27000 to accompany it 
 		// with one extra element for the EOF byte position
-		long[] indexArr = new long[900*29+30*29+29+1];
+		long[] indexArr = new long[27000+1];
 		
 		// We initiate the array with -1 to indicate invalid position.
 		// Will be later replaced by valid positions.

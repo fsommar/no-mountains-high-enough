@@ -67,6 +67,7 @@ public class Main {
 			searchTerm = args[0];
 		}
 		
+		long startTime = System.currentTimeMillis();
 		// Init concordance
 		Concordance c = null;
 		try {
@@ -84,7 +85,7 @@ public class Main {
 			// Calc the number of occurrences of the search term in the source file from the position range.
 			int occurrencesCount = posRange.getOccurrenceCount();
 			System.out.printf("Det finns %d förekomster av ordet '%s'.\n", occurrencesCount, searchTerm);
-			
+			System.out.printf("Det tog %.3f sekunder.\n", (System.currentTimeMillis()-startTime)/1000.0);
 			// If occurrence count is above threshold, confirm if user wants to print all occurrences. 
 			if (occurrencesCount > Constants.MAX_OCCURENCES) {
 				System.out.printf("Det finns fler än %d förekomster av ordet '%s'. Vill du visa alla förekomster?\n"+

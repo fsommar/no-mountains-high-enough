@@ -26,6 +26,11 @@ public class LazyHashTest {
 		}
 		
 		@Test
+		public void testLastHash() {
+			assertEquals(900*29+30*29+29, LazyHash.hash("ööö"));
+		}
+		
+		@Test
 		public void testPositions() {
 			assertEquals(900*1, LazyHash.hash("a  "));
 			assertEquals(30*1, LazyHash.hash(" a "));

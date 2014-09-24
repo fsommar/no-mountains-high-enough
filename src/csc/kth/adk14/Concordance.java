@@ -79,6 +79,9 @@ public class Concordance {
 		try {
 			while (true) {
 				LineData data = readLineDataFromFile(k2Reader);
+				if (data == null) {
+					break;
+				}
 				int wordComp = data.word.compareTo(searchTerm);
 				if (wordComp == 0) { // the words are equal
 					// Read the next position to get a range for which to look in the E file.
@@ -89,9 +92,10 @@ public class Concordance {
 					// data.word is greater than the searched term. This means
 					// we have gone too far in the file meaning the word does
 					// not exist.
-					throw new WordNotFoundException();
+					break;
 				}
 			}
+			throw new WordNotFoundException();
 		} finally {
 			k2Reader.close();
 		}
